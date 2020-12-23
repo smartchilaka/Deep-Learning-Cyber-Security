@@ -1,0 +1,156 @@
+
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+#include "webpage.h"
+
+const char* ssid = "directwifirobot";
+const char* password = "11111111";
+String  data =""; 
+
+#define rightMotorForward D1   //OUT1
+#define rightMotorBackward D2  //OUT2
+#define leftMotorForward D3  //OUT3
+#define leftMotorBackward D4 //OUT4
+#define rightMotorSpeed D5   //Motor-A Enabled
+#define leftMotorSpeed D6  //Motor-B Enabled
+
+
+const int SPEED = 380;     //380
+const int TURNSPEED = 340; //340
+
+
+
+//Static IP address configuration
+IPAddress staticIP(192, 168, 8, 1); //ESP static ip
+IPAddress subnet(255, 255, 255, 0);  //Subnet mask
+
+ESP8266WebServer server(80);
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(D1, OUTPUT);
+  pinMode(D2, OUTPUT); 
+  pinMode(D3, OUTPUT);  
+  pinMode(D4, OUTPUT);
+  pinMode(leftMotorSpeed, OUTPUT);
+  pinMode(rightMotorSpeed, OUTPUT);
+  
+  Serial.begin(115200);
+  delay(10);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(staticIP, NULL, subnet);
+  WiFi.softAP(ssid, password);
+
+  server.begin();
+ 
+  IPAddress ServerIP = WiFi.softAPIP(); // Obtain the IP of the Server
+  Serial.print("\nServer IP is: "); // Print the IP to the monitor window
+  Serial.println(ServerIP);
+
+  server.on("/", handleRoot); //Associate handler function to web requests
+  server.on("/right", handleRight); //Associate handler function to web requests
+  server.on("/left", handleLeft);
+  server.on("/stop", handleStop);
+  server.on("/forward", handleForward);
+  server.on("/backward", handleBackward);
+  server.begin(); //Start web server
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  server.handleClient();
+}
+
+
+
+void handleRoot() {
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+}
+
+void handleRight() {
+  Serial.println("got right request");
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+  analogWrite(leftMotorSpeed, TURNSPEED);  
+  analogWrite(rightMotorSpeed, TURNSPEED);
+  digitalWrite(leftMotorBackward,LOW);
+  digitalWrite(rightMotorBackward,HIGH);
+  digitalWrite(leftMotorForward,HIGH);
+  digitalWrite(rightMotorForward,LOW);
+}
+
+void handleLeft() {
+  Serial.println("got left request");
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+  analogWrite(leftMotorSpeed, TURNSPEED);  
+  analogWrite(rightMotorSpeed, TURNSPEED);
+  digitalWrite(leftMotorBackward,HIGH);
+  digitalWrite(rightMotorBackward,LOW);
+  digitalWrite(leftMotorForward,LOW);
+  digitalWrite(rightMotorForward,HIGH);
+}
+
+void handleStop() {
+  Serial.println("got stop request");
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+  analogWrite(leftMotorSpeed,0);
+  analogWrite(rightMotorSpeed,0);
+  digitalWrite(leftMotorForward,LOW);
+  digitalWrite(leftMotorBackward,LOW);
+  digitalWrite(rightMotorForward,LOW);
+  digitalWrite(rightMotorBackward,LOW);
+}
+
+void handleForward() {
+  Serial.println("got forward request");
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+  analogWrite(leftMotorSpeed, SPEED);  
+  analogWrite(rightMotorSpeed, SPEED); 
+  digitalWrite(leftMotorBackward,LOW);
+  digitalWrite(rightMotorBackward,LOW);
+  digitalWrite(leftMotorForward,HIGH);
+  digitalWrite(rightMotorForward,HIGH);
+}
+
+void handleBackward() {
+  Serial.println("got backward request");
+  server.send(200, "text/html", webPage); //webPage is defined in htmlPage.h file
+  analogWrite(leftMotorSpeed, SPEED);  //500 - 300
+  analogWrite(rightMotorSpeed, SPEED); 
+  digitalWrite(leftMotorForward,LOW);
+  digitalWrite(rightMotorForward,LOW);
+  digitalWrite(leftMotorBackward,HIGH);
+  digitalWrite(rightMotorBackward,HIGH);
+}
+
+
+.................................................
+webpage.h
+.............
+const char webPage[] PROGMEM = R"=====(
+  <!DOCTYPE html><html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+
+<style>
+html { 
+  font-family: Helvetica; 
+  display: inline-block;
+  margin: 0px auto; 
+  text-align: center;
+}
+.button { 
+  background-color: #008CBA; 
+  border: none; color: white;
+  padding: 16px 40px;
+  text-decoration: none; 
+  font-size: 30px; 
+  margin: 2px; 
+  cursor: pointer;
+  }
+  .button2 {
+  background-color: #77878A;
+  }
+  </style>
+</head>
